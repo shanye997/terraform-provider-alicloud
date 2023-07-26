@@ -32,6 +32,7 @@ develop*
 !vendor/github.com/valyala/**/*.pem
 task-config
 website/vendor
+.vscode
 
 # Test exclusions
 !command/test-fixtures/**/*.tfstate

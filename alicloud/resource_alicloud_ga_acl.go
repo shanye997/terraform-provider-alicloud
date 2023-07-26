@@ -68,6 +68,11 @@ func resourceAlicloudGaAcl() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"resource_group_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -89,6 +94,10 @@ func resourceAlicloudGaAclCreate(d *schema.ResourceData, meta interface{}) error
 
 	if v, ok := d.GetOk("acl_name"); ok {
 		request["AclName"] = v
+	}
+
+	if v, ok := d.GetOk("resource_group_id"); ok {
+		request["ResourceGroupId"] = v
 	}
 
 	if m, ok := d.GetOk("acl_entries"); ok {
@@ -148,6 +157,7 @@ func resourceAlicloudGaAclRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("address_ip_version", object["AddressIPVersion"])
 	d.Set("acl_name", object["AclName"])
+	d.Set("resource_group_id", object["ResourceGroupId"])
 	d.Set("status", object["AclStatus"])
 
 	if v, ok := object["AclEntries"].([]interface{}); ok {
@@ -234,6 +244,45 @@ func resourceAlicloudGaAclUpdate(d *schema.ResourceData, meta interface{}) error
 		}
 
 		d.SetPartial("acl_name")
+	}
+
+	update = false
+	request = make(map[string]interface{})
+	request["ResourceId"] = d.Id()
+	request["RegionId"] = client.RegionId
+	request["ClientToken"] = buildClientToken("ChangeResourceGroup")
+	if !d.IsNewResource() && d.HasChange("resource_group_id") {
+		update = true
+		request["NewResourceGroupId"] = d.Get("resource_group_id")
+	}
+
+	request["ResourceType"] = "acl"
+	if update {
+		action := "ChangeResourceGroup"
+		conn, err := client.NewGaplusClient()
+		if err != nil {
+			return WrapError(err)
+		}
+
+		wait := incrementalWait(3*time.Second, 5*time.Second)
+		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-11-20"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+			request["ClientToken"] = buildClientToken(action)
+
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			addDebug(action, response, request)
+			return nil
+		})
+		if err != nil {
+			return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+		}
+		d.SetPartial("resource_group_id")
 	}
 
 	if !d.IsNewResource() && d.HasChange("acl_entries") {

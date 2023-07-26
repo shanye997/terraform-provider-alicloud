@@ -71,6 +71,11 @@ func resourceAlicloudGaBasicAccelerator() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"resource_group_id": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -88,6 +93,10 @@ func resourceAlicloudGaBasicAcceleratorCreate(d *schema.ResourceData, meta inter
 
 	request["RegionId"] = client.RegionId
 	request["ClientToken"] = buildClientToken("CreateBasicAccelerator")
+
+	if v, ok := d.GetOk("resource_group_id"); ok {
+		request["ResourceGroupId"] = v
+	}
 
 	if v, ok := d.GetOk("duration"); ok {
 		request["Duration"] = v
@@ -164,6 +173,7 @@ func resourceAlicloudGaBasicAcceleratorRead(d *schema.ResourceData, meta interfa
 	d.Set("description", object["Description"])
 	d.Set("bandwidth_billing_type", object["BandwidthBillingType"])
 	d.Set("status", object["State"])
+	d.Set("resource_group_id", object["ResourceGroupId"])
 
 	listTagResourcesObject, err := gaService.ListTagResources(d.Id(), "basicaccelerator")
 	if err != nil {
@@ -243,6 +253,47 @@ func resourceAlicloudGaBasicAcceleratorUpdate(d *schema.ResourceData, meta inter
 
 		d.SetPartial("basic_accelerator_name")
 		d.SetPartial("description")
+	}
+
+	update = false
+	request = make(map[string]interface{})
+	request["ResourceId"] = d.Id()
+	request["RegionId"] = client.RegionId
+	request["ClientToken"] = buildClientToken("ChangeResourceGroup")
+	if !d.IsNewResource() && d.HasChange("resource_group_id") {
+		update = true
+		request["NewResourceGroupId"] = d.Get("resource_group_id")
+	}
+
+	if v, ok := d.GetOk("resource_type"); ok {
+		request["ResourceType"] = v
+	}
+	if update {
+		action := "ChangeResourceGroup"
+		conn, err := client.NewGaplusClient()
+		if err != nil {
+			return WrapError(err)
+		}
+
+		wait := incrementalWait(3*time.Second, 5*time.Second)
+		err = resource.Retry(d.Timeout(schema.TimeoutUpdate), func() *resource.RetryError {
+			response, err = conn.DoRequest(StringPointer(action), nil, StringPointer("POST"), StringPointer("2019-11-20"), StringPointer("AK"), nil, request, &util.RuntimeOptions{})
+			request["ClientToken"] = buildClientToken(action)
+
+			if err != nil {
+				if NeedRetry(err) {
+					wait()
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(err)
+			}
+			addDebug(action, response, request)
+			return nil
+		})
+		if err != nil {
+			return WrapErrorf(err, DefaultErrorMsg, d.Id(), action, AlibabaCloudSdkGoERROR)
+		}
+		d.SetPartial("resource_group_id")
 	}
 
 	d.Partial(false)
