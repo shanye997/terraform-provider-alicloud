@@ -129,6 +129,7 @@ func TestAccAlicloudMSECluster_basic0(t *testing.T) {
 					"cluster_alias_name":    name,
 					"connection_type":       "slb",
 					"mse_version":           "mse_dev",
+					"pay_info":              "POSTPAY",
 				}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheck(map[string]string{
@@ -142,6 +143,7 @@ func TestAccAlicloudMSECluster_basic0(t *testing.T) {
 						"cluster_alias_name":    name,
 						"connection_type":       "slb",
 						"mse_version":           "mse_dev",
+						"pay_info":              "POSTPAY",
 					}),
 				),
 			},
@@ -188,6 +190,36 @@ func TestAccAlicloudMSECluster_basic0(t *testing.T) {
 				),
 			},
 			{
+				Config: testAccConfig(map[string]interface{}{
+					"tags": map[string]string{
+						"Created": "TF",
+						"For":     "Test",
+					},
+				}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheck(map[string]string{
+						"tags.%":       "2",
+						"tags.Created": "TF",
+						"tags.For":     "Test",
+					}),
+				),
+			},
+			{
+				Config: testAccConfig(map[string]interface{}{
+					"tags": map[string]string{
+						"Created": "TF-update",
+						"For":     "Test-update",
+					},
+				}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheck(map[string]string{
+						"tags.%":       "2",
+						"tags.Created": "TF-update",
+						"tags.For":     "Test-update",
+					}),
+				),
+			},
+			{
 				ResourceName:            resourceId,
 				ImportState:             true,
 				ImportStateVerify:       true,
@@ -229,6 +261,7 @@ func TestAccAlicloudMSECluster_basic1(t *testing.T) {
 					"cluster_alias_name":    name,
 					"connection_type":       "slb",
 					"mse_version":           "mse_dev",
+					"pay_info":              "POSTPAY",
 				}),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheck(map[string]string{
@@ -242,6 +275,7 @@ func TestAccAlicloudMSECluster_basic1(t *testing.T) {
 						"cluster_alias_name":    name,
 						"connection_type":       "slb",
 						"mse_version":           "mse_dev",
+						"pay_info":              "POSTPAY",
 					}),
 				),
 			},
@@ -274,6 +308,36 @@ func TestAccAlicloudMSECluster_basic1(t *testing.T) {
 					testAccCheck(map[string]string{
 						"cluster_alias_name": name,
 						"acl_entry_list.#":   "1",
+					}),
+				),
+			},
+			{
+				Config: testAccConfig(map[string]interface{}{
+					"tags": map[string]string{
+						"Created": "TF",
+						"For":     "Test",
+					},
+				}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheck(map[string]string{
+						"tags.%":       "2",
+						"tags.Created": "TF",
+						"tags.For":     "Test",
+					}),
+				),
+			},
+			{
+				Config: testAccConfig(map[string]interface{}{
+					"tags": map[string]string{
+						"Created": "TF-update",
+						"For":     "Test-update",
+					},
+				}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheck(map[string]string{
+						"tags.%":       "2",
+						"tags.Created": "TF-update",
+						"tags.For":     "Test-update",
 					}),
 				),
 			},
@@ -362,6 +426,36 @@ func TestAccAlicloudMSECluster_pro(t *testing.T) {
 					testAccCheck(map[string]string{
 						"cluster_specification": "MSE_SC_2_4_60_c",
 						"instance_count":        "3",
+					}),
+				),
+			},
+			{
+				Config: testAccConfig(map[string]interface{}{
+					"tags": map[string]string{
+						"Created": "TF",
+						"For":     "Test",
+					},
+				}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheck(map[string]string{
+						"tags.%":       "2",
+						"tags.Created": "TF",
+						"tags.For":     "Test",
+					}),
+				),
+			},
+			{
+				Config: testAccConfig(map[string]interface{}{
+					"tags": map[string]string{
+						"Created": "TF-update",
+						"For":     "Test-update",
+					},
+				}),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheck(map[string]string{
+						"tags.%":       "2",
+						"tags.Created": "TF-update",
+						"tags.For":     "Test-update",
 					}),
 				),
 			},

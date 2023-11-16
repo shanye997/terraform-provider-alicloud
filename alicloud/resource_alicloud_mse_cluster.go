@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/PaesslerAG/jsonpath"
 	util "github.com/alibabacloud-go/tea-utils/service"
 	"github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -118,6 +119,14 @@ func resourceAlicloudMseCluster() *schema.Resource {
 				Computed: true,
 				ForceNew: true,
 			},
+			"pay_info": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ForceNew:     true,
+				ValidateFunc: StringInSlice([]string{"PREPAY", "POSTPAY"}, false),
+			},
+			"tags": tagsSchema(),
 			"cluster_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -178,6 +187,10 @@ func resourceAlicloudMseClusterCreate(d *schema.ResourceData, meta interface{}) 
 
 	if v, ok := d.GetOk("vswitch_id"); ok {
 		request["VSwitchId"] = v
+	}
+
+	if v, ok := d.GetOk("pay_info"); ok {
+		request["ChargeType"] = v
 	}
 
 	request["Region"] = client.RegionId
@@ -247,6 +260,15 @@ func resourceAlicloudMseClusterRead(d *schema.ResourceData, meta interface{}) er
 	d.Set("cluster_id", object["ClusterId"])
 	d.Set("app_version", object["AppVersion"])
 	d.Set("status", object["InitStatus"])
+	d.Set("pay_info", object["ChargeType"])
+
+	object, err = mseService.DescribeListTagResources(d.Id())
+	if err != nil {
+		return WrapError(err)
+	}
+
+	tagsMaps, _ := jsonpath.Get("$.TagResources.TagResource", object)
+	d.Set("tags", tagsToMap(tagsMaps))
 
 	return nil
 }
@@ -370,6 +392,15 @@ func resourceAlicloudMseClusterUpdate(d *schema.ResourceData, meta interface{}) 
 
 		d.SetPartial("cluster_specification")
 		d.SetPartial("instance_count")
+	}
+
+	update = false
+	if d.HasChange("tags") {
+		update = true
+		if err := mseService.SetResourceTags(d, "CLUSTER"); err != nil {
+			return WrapError(err)
+		}
+		d.SetPartial("tags")
 	}
 
 	d.Partial(false)
