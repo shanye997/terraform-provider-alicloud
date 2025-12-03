@@ -15,7 +15,11 @@ Provides a ECS instance resource.
 
 -> **NOTE:** From version v1.213.0, you can specify `launch_template_id` and `launch_template_version` to use a launch template. This eliminates the need to configure a large number of parameters every time you create instances.
 
+
 ## Example Usage
+
+📚 Need more examples? [MORE EXAMPLES](https://api.aliyun.com/terraform?activeTab=sample&source=Sample&sourcePath=OfficialSample:alicloud_instance&spm=docs.r.instance.example)
+
 
 <div style="display: block;margin-bottom: 40px;"><div class="oics-button" style="float: right;position: absolute;margin-bottom: 10px;">
   <a href="https://api.aliyun.com/terraform?resource=alicloud_instance&exampleId=f98d5a2b-3f0d-19d9-4708-bce020dfaf3bc8d21801&activeTab=example&spm=docs.r.instance.0.f98d5a2b3f&intl_lang=EN_US" target="_blank">
